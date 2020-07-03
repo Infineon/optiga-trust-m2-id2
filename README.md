@@ -4,15 +4,11 @@
 
 ## Security Chip
 
-### <a name="description"></a>Description
+### Description
 
-<img src="https://github.com/Infineon/Assets/blob/master/Pictures/optiga_trust_m_uson10.png" width="300" >
+### Summary
 
-This repository contains a target-agnostic Software Framework for the [OPTIGA™ Trust M2 ID2](https://www.infineon.com/optiga-trust) security chip. It is a base for other application notes.
-
-### <a name="summary"></a>Summary
-
-### <a name="key_features_and_benefits"></a>Key Features and Benefits
+###Key Features and Benefits
 
 ## Get Started
 
