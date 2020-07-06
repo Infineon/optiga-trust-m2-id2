@@ -10,9 +10,8 @@
   * [Evaluation kit](#Evaluation-kit)
   * [Software Framework overview](#Software-Framework-overview)
 * [Documentation](#Documentation)
-  * [Usefull articles](#Usefull-articles)
   * [Board assembly recommendations](#Board-assembly-recommendations)
-  * [Contributing](#Contributing)
+* [Contributing](#Contributing)
 
 
 ## Security Chip
