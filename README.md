@@ -18,14 +18,6 @@
 
 <img src="https://github.com/Infineon/Assets/raw/master/Pictures/lowres-OPTIGA%20Trust%20M2%20ID2%2010-2%20plain.tif.png" width="300" style="float:right">
 
-<img src="https://github.com/Infineon/Assets/blob/master/Pictures/optiga_trust_x_gitrepo_tile_1.jpg" width="256" height="192" alt="Workplace" usemap="#workmap"></a>
-
-<map name="workmap">
-  <area shape="rect" coords="34,44,270,350" alt="Computer" href="computer.htm">
-  <area shape="rect" coords="290,172,333,250" alt="Phone" href="phone.htm">
-  <area shape="circle" coords="337,300,44" alt="Cup of coffee" href="coffee.htm">
-</map>
-
 ### Description
 
 This repository contains a target-agnostic Software Framework for the OPTIGA™ Trust M2 ID2 security chip. It is a base for other application notes.
