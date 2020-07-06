@@ -18,7 +18,7 @@
 
 <img src="https://github.com/Infineon/Assets/raw/master/Pictures/lowres-OPTIGA%20Trust%20M2%20ID2%2010-2%20plain.tif.png" width="300" style="float:right">
 
-<img src="workplace.jpg" alt="Workplace" usemap="#workmap" width="400" height="379">
+<img src="https://github.com/Infineon/Assets/blob/master/Pictures/optiga_trust_x_gitrepo_tile_1.jpg" width="256" height="192" alt="Workplace" usemap="#workmap"></a>
 
 <map name="workmap">
   <area shape="rect" coords="34,44,270,350" alt="Computer" href="computer.htm">
