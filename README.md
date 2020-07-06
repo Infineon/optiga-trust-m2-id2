@@ -24,7 +24,7 @@ This repository contains a target-agnostic Software Framework for the OPTIGA™ 
 
 ### Summary
 
-The OPTIGA™ Trust M2 ID2 is a security solution based on a secure microntroller. devices might come provisioned on demand. The generic device contains a unique AES (ALI ID2 specific) symmetric key and a device ID. OPTIGA™ Trust M2 ID2 enables easy integration in Alibaba Cloud.
+The OPTIGA™ Trust M2 ID2 is a security solution based on a secure microntroller. devices might come provisioned on demand. The generic device contains a unique AES (ALI ID2 specific) symmetric key and a device ID. OPTIGA™ Trust M2 ID2 enables easy integration in Alibaba Cloud IoT.
 
 ### Key Features and Benefits
 
