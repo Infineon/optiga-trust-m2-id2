@@ -2,6 +2,20 @@
 
 ## Quick navigation
 
+* [Security Chip](#security-chip)
+  * [Description](#description)
+  * [Summary](#summary)
+  * [Key Features and Benefits](#key-features-and-benefits)
+* [Get Started](#Get-Started)
+  * [Evaluation kit](#Evaluation-kit)
+  * [Software Framework overview](#Software-Framework-overview)
+  * [Developement kits](#Developement-kits)
+* [Documentation](#Documentation)
+  * [Usefull articles](#Usefull-articles)
+  * [Board assembly recommendations](#Board-assembly-recommendations)
+  * [Contributing](#Contributing)
+
+
 ## Security Chip
 
 ### Description
@@ -12,11 +26,11 @@
 
 ## Get Started
 
-### OPTIGA™ Trust M2 ID2 evaluation kit
+### Evaluation kit
 
 ### Software Framework overview
 
-### Evaluation and developement kits
+### Developement kits
 
 ## Documentation
 
