@@ -28,6 +28,24 @@ The OPTIGA™ Trust M2 ID2 is a security solution based on a secure microntrolle
 
 ### Key Features and Benefits
 
+* High-end security controller
+* Common Criteria Certified EAL6+ (high) hardware
+* Turnkey solution
+* Up to 10kB user memory
+* PG-USON-10-2 package (3 x 3 mm)
+* Temperature range (−40°C to +105°C)
+* I2C interface with Shielded Connection (encrypted communication)
+* Cryptographic support: 
+  * RSA® up to 2048
+  * AES key up to 256 , HMAC up to SHA512
+  * TLS v1.2 PRF and HKDF up to SHA512
+* Crypto ToolBox commands for SHA-256, RSA® Feature, AES, HMAC and Key derivation
+* Alibaba Cloud IoT connectivity
+* Configurable device security monitor, 4 Monotonic up counters
+* Protected(integrity and confidentiality) update of data, key and metadata objects
+* Hibernate for zero power consumption
+* Lifetime for Industrial Automation and Infrastructure is 20 years and 15 years for other Application Profiles  
+
 ### OPTIGA&trade; Trust M features table
 
 <table class="tg">
