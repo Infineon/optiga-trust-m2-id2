@@ -46,7 +46,7 @@ The OPTIGA™ Trust M2 ID2 is a security solution based on a secure microntrolle
 * Hibernate for zero power consumption
 * Lifetime for Industrial Automation and Infrastructure is 20 years and 15 years for other Application Profiles  
 
-### OPTIGA&trade; Trust M features table
+### OPTIGA&trade; Trust M  feature comparison table
 
 <table class="tg">
   <tr>
