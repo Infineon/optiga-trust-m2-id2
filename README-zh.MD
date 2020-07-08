@@ -1,3 +1,5 @@
+[EN](./README.md) | 中文
+
 # OPTIGA&trade; Trust M2 ID2 软件框架
 
 ## 快速导航
