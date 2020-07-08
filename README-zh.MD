@@ -182,7 +182,7 @@ OPTIGA™Trust M2 ID2是一种基于安全微控制器的安全解决方案。�
 
 ### PCB板设计指南
 
-如果你计划集成OPTIGA™ Trust M至 PCB设计中，建议参考[这里(外部,打开相同的标签页)(https://www.infineon.com/dgdl/Infineon-Recommendations_for_Board_Assembly_xQFN-P-v01_00-EN.pdf?fileId=5546d462580663ef015806ab383a05bf)]。
+如果你计划集成OPTIGA™ Trust M至 PCB设计中，建议参考[点击这里(外部链接,在当前标签页中打开)](https://www.infineon.com/dgdl/Infineon-Recommendations_for_Board_Assembly_xQFN-P-v01_00-EN.pdf?fileId=5546d462580663ef015806ab383a05bf)。
 
 ## <a name="contributing"></a>贡献代码
 
