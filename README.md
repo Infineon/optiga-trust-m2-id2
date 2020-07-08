@@ -1,4 +1,4 @@
-EN | [中文](./README-zh.md)
+EN | [中文](./README-zh.MD)
 
 # OPTIGA&trade; Trust M2 ID2 Software Framework
 
