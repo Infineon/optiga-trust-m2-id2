@@ -40,6 +40,11 @@
 #include "optiga/pal/pal_logger.h"
 #include "optiga/pal/pal_os_memory.h"
 
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+extern void example_optiga_init(void);
+extern void example_optiga_deinit(void);
+#endif
+
 extern pal_logger_t logger_console;
 
 /**
@@ -163,16 +168,25 @@ static void optiga_lib_print_coprocessor_components(const char_t * p_log_string,
  *
  */
 void example_read_coprocessor_id(void)
-{
+{  
+    uint32_t time_taken = 0;    
     uint16_t bytes_to_read;
     uint8_t coprocessor_uid[32];
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     optiga_util_t * me_util = NULL;
 
-    OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
-
     do
     {
+        
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+        /**
+         * Open the application on OPTIGA which is a precondition to perform any other operations
+         * using optiga_util_open_application
+         */
+        example_optiga_init();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+        
+        OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
         /**
          * 1. Create OPTIGA Util Instance
          */
@@ -181,13 +195,16 @@ void example_read_coprocessor_id(void)
         {
             break;
         }
-
+                
         /**
          * 2. Read Coprocessor UID (0xE0C2) data object from OPTIGA
          *    using optiga_util_read_data.
          */
         bytes_to_read = sizeof(coprocessor_uid);
         optiga_lib_status = OPTIGA_LIB_BUSY;
+        
+        START_PERFORMANCE_MEASUREMENT(time_taken);
+        
         return_status = optiga_util_read_data(me_util,
                                               0xE0C2,
                                               0x0000,
@@ -195,6 +212,9 @@ void example_read_coprocessor_id(void)
                                               &bytes_to_read);
 
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
+        
+        READ_PERFORMANCE_MEASUREMENT(time_taken);
+        
         return_status = OPTIGA_LIB_SUCCESS;
         OPTIGA_EXAMPLE_LOG_MESSAGE("Coprocessor UID components are mentioned below:\n");
         OPTIGA_EXAMPLE_LOG_COPROCESSOR_ID_INFO("CIM Identifier                       : ", &coprocessor_uid[0], 0x01);
@@ -221,6 +241,15 @@ void example_read_coprocessor_id(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
+    
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
 }
 
 /**

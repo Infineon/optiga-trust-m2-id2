@@ -44,6 +44,7 @@
 #include "mbedtls/version.h"
 
 #define PAL_CRYPT_MAX_LABEL_SEED_LENGTH     (96U)
+
 //lint --e{818, 715, 830} suppress "argument "p_pal_crypt" is not used in the implementation but kept for future use"
 pal_status_t pal_crypt_tls_prf_sha256(pal_crypt_t* p_pal_crypt,
                                       const uint8_t * p_secret,
@@ -278,6 +279,45 @@ pal_status_t pal_crypt_decrypt_aes128_ccm(pal_crypt_t* p_pal_crypt,
     return return_status;
 }
 
+//lint --e{818, 715, 830} suppress "argument "p_pal_crypt" is not used in the implementation but kept for future use"
+pal_status_t pal_crypt_hmac(pal_crypt_t* p_pal_crypt,
+                            uint16_t hmac_type,
+                            const uint8_t * secret_key,
+                            uint16_t secret_key_len,
+                            const uint8_t * input_data,
+                            uint32_t input_data_length,
+                            uint8_t * hmac)
+{
+    pal_status_t return_value = PAL_STATUS_FAILURE;
+
+    const mbedtls_md_info_t * hmac_info;
+    mbedtls_md_type_t digest_type;
+    
+    do
+    {
+#ifdef OPTIGA_LIB_DEBUG_NULL_CHECK
+        if ((NULL == input_data) || (NULL == hmac) || (NULL == secret_key))
+        {
+            break;
+        }
+#endif  //OPTIGA_LIB_DEBUG_NULL_CHECK
+
+        digest_type = (((uint16_t)OPTIGA_HMAC_SHA_256 == hmac_type)? MBEDTLS_MD_SHA256: MBEDTLS_MD_SHA384);
+        
+        hmac_info = mbedtls_md_info_from_type(digest_type);
+
+        if (0 != mbedtls_md_hmac(hmac_info, secret_key, secret_key_len, input_data, input_data_length, hmac))
+        {
+            break;
+        }
+        
+        return_value = PAL_STATUS_SUCCESS;
+
+    } while (FALSE);
+
+    return return_value;
+}
+
 pal_status_t pal_crypt_version(uint8_t * p_crypt_lib_version_info, uint16_t * length)
 {
     pal_status_t return_value  = PAL_STATUS_FAILURE;    
@@ -298,8 +338,6 @@ pal_status_t pal_crypt_version(uint8_t * p_crypt_lib_version_info, uint16_t * le
     } while (0);
     return return_value;
 }
-
-
 /**
 * @}
 */

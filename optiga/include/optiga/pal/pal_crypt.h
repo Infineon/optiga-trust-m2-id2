@@ -169,6 +169,36 @@ LIBRARY_EXPORTS pal_status_t pal_crypt_decrypt_aes128_ccm(pal_crypt_t* p_pal_cry
                                                           uint8_t * p_plain_text);
 
 /**
+ * \brief Calculates the HMAC on the input data with the provided secret key.
+ *
+ * \details
+ * Calculates the HMAC on the input data with the provided secret key and returns HMAC.
+ *
+ * \pre
+ * - None
+ *
+ * \note
+ * - None
+ *
+ * \param[in]           p_pal_crypt                 Crypt context
+ * \param[in]           hmac_type                   HMAC of type #optiga_hmac_type_t.
+ * \param[in]           secret_key                  HMAC secret key.
+ * \param[in]           secret_key_len              Length of HMAC secret key.
+ * \param[in]           input_data                  Pointer to input data for HMAC generation .
+ * \param[in]           input_data_length           Length of input data for HMAC generation.
+ * \param[in,out]       hmac                        Pointer to buffer to store generated HMAC.
+ *
+ * \retval              PAL_STATUS_SUCCESS          In case of success
+ * \retval              PAL_STATUS_FAILURE          In case of failure
+ */ 
+LIBRARY_EXPORTS pal_status_t pal_crypt_hmac(pal_crypt_t* p_pal_crypt,
+                                            uint16_t hmac_type,
+                                            const uint8_t * secret_key,
+                                            uint16_t secret_key_len,
+                                            const uint8_t * input_data,
+                                            uint32_t input_data_length,
+                                            uint8_t * hmac);
+/**
  * \brief Gets the external crypto library version number.
  *
  * \details

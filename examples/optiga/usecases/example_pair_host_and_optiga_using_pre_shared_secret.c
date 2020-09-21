@@ -41,6 +41,14 @@
 #include "optiga/pal/pal_os_datastore.h"
 #include "optiga_example.h"
 #ifdef OPTIGA_COMMS_SHIELDED_CONNECTION 
+
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+extern void example_optiga_init(void);
+extern void example_optiga_deinit(void);
+#endif
+
+uint32_t time_taken_for_pairing = 0;
+    
 // Value of Operational state
 #define LCSO_STATE_CREATION       (0x01)
 // Value of Operational state
@@ -90,23 +98,7 @@ static void optiga_lib_callback(void * context, optiga_lib_status_t return_statu
     }
 }
 
-/**
- * The below example demonstrates pairing the Host and OPTIGA using a preshared secret for the first time.
- *
- * Note:
- *   1) If the below example is executed once, the LcsO of Platform Binding shared secret is set to Initialization.
- *      The LcsO can't be reverted to previous states.
- *
- *      Please ensure the access conditions and other required settings in the metadata must be accordingly
- *      before setting the LcsO to Initialization state.
- *
- *   2) The metadata gets written in this example is just an example. The user must update this to the respective
- *      needs including LcsO state and access conditions
- *
- * Preconditions: The optiga_util_open_application must be executed before invoking the below example.
- *
- */
-void example_pair_host_and_optiga_using_pre_shared_secret(void)
+optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 {
     uint16_t bytes_to_read;
     uint8_t platform_binding_secret[64];
@@ -115,8 +107,6 @@ void example_pair_host_and_optiga_using_pre_shared_secret(void)
     pal_status_t pal_return_status;
     optiga_util_t * me_util = NULL;
     optiga_crypt_t * me_crypt = NULL;
-
-    OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
 
     do
     {
@@ -134,7 +124,7 @@ void example_pair_host_and_optiga_using_pre_shared_secret(void)
         {
             break;
         }
-
+        
         /**
          * 2. Initialize the protection level and protocol version for the instances
          */
@@ -143,13 +133,16 @@ void example_pair_host_and_optiga_using_pre_shared_secret(void)
 
         OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(me_crypt,OPTIGA_COMMS_NO_PROTECTION);
         OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(me_crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
-
+                        
         /**
          * 3. Read Platform Binding Shared secret (0xE140) data object metadata from OPTIGA
          *    using optiga_util_read_metadata.
          */
         bytes_to_read = sizeof(platform_binding_secret_metadata);
         optiga_lib_status = OPTIGA_LIB_BUSY;
+        
+        START_PERFORMANCE_MEASUREMENT(time_taken_for_pairing);
+        
         return_status = optiga_util_read_metadata(me_util,
                                                   0xE140,
                                                   platform_binding_secret_metadata,
@@ -231,7 +224,9 @@ void example_pair_host_and_optiga_using_pre_shared_secret(void)
                                                    sizeof(platform_binding_shared_secret_metadata_final));
 
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
-
+        
+        READ_PERFORMANCE_MEASUREMENT(time_taken_for_pairing);
+        
         return_status = OPTIGA_LIB_SUCCESS;
 
     } while(FALSE);
@@ -257,6 +252,48 @@ void example_pair_host_and_optiga_using_pre_shared_secret(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
+    return return_status;
+}
+
+/**
+ * The below example demonstrates pairing the Host and OPTIGA using a preshared secret for the first time.
+ *
+ * Note:
+ *   1) If the below example is executed once, the LcsO of Platform Binding shared secret is set to Initialization.
+ *      The LcsO can't be reverted to previous states.
+ *
+ *      Please ensure the access conditions and other required settings in the metadata must be accordingly
+ *      before setting the LcsO to Initialization state.
+ *
+ *   2) The metadata gets written in this example is just an example. The user must update this to the respective
+ *      needs including LcsO state and access conditions
+ *
+ * Preconditions: The optiga_util_open_application must be executed before invoking the below example.
+ *
+ */
+void example_pair_host_and_optiga_using_pre_shared_secret(void)
+{
+    optiga_lib_status_t return_status;
+    
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Open the application on OPTIGA which is a precondition to perform any other operations
+     * using optiga_util_open_application
+     */
+    example_optiga_init();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
+    
+    return_status = pair_host_and_optiga_using_pre_shared_secret();
+     
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken_for_pairing,return_status);
     
 }
 #endif

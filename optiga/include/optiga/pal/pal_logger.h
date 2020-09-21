@@ -144,6 +144,29 @@ pal_status_t pal_logger_write(void * p_logger_context, const uint8_t * p_log_dat
  */
 pal_status_t pal_logger_read(void * p_logger_context, uint8_t * p_log_data, uint32_t log_data_length);
 
+/**
+ * \brief Read the number of bytes.
+ *
+ * \details
+ * Reads the number of bytes provided by logger.
+ * - Invokes the platform dependent function to log the information provided.<br>
+ *
+ * \pre
+ * - The pal_logger is initialized if required.
+ *
+ * \note
+ * - None
+ *
+ * \param[in] p_logger_context    Valid pointer to the PAL logger context that should be initialized
+ * \param[in] p_log_data          Pointer to the log data (data to be logged)
+ * \param[in] log_data_length     Length of data to be logged.
+ *
+ * \retval    PAL_STATUS_SUCCESS  In case of successfully read to logger
+ * \retval    PAL_STATUS_FAILURE  In case of failure while read to logger
+ *
+ */
+pal_status_t pal_logger_read_byte_length(void * p_logger_context, uint8_t * p_log_data, uint32_t log_data_length);
+
 #ifdef __cplusplus
 }
 #endif

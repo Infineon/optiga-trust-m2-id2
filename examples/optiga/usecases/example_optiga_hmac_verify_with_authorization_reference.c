@@ -41,10 +41,14 @@
 #include "optiga/pal/pal_os_memory.h"
 #include "optiga/pal/pal_crypt.h"
 #include "optiga_example.h"
-#include "mbedtls/ccm.h"
-#include "mbedtls/md.h"
-#include "mbedtls/ssl.h"
+
 #if defined (OPTIGA_CRYPT_GENERATE_AUTH_CODE_ENABLED) && defined (OPTIGA_CRYPT_HMAC_VERIFY_ENABLED)
+
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+extern void example_optiga_init(void);
+extern void example_optiga_deinit(void);
+#endif
+
 /**
  * Metadata for Secret OID :
  * Execute access condition = Always
@@ -143,83 +147,6 @@ static void optiga_lib_callback(void * context, optiga_lib_status_t return_statu
     }
 }
 
-//lint --e{818, 715, 830} suppress "argument "p_pal_crypt" is not used in the implementation but kept for future use"
-/**
- * \brief Calculates the HMAC on the input data with the provided secret key.
- *
- * \details
- * Calculates the HMAC on the input data with the provided secret key and returns HMAC.
- *
- * \pre
- * - None
- *
- * \note
- * - None
- *
- * \param[in]           p_pal_crypt                 Crypt context
- * \param[in]           hmac_type                   HMAC of type #optiga_hmac_type_t.
- * \param[in]           secret_key                  HMAC secret key.
- * \param[in]           secret_key_len              Length of HMAC secret key.
- * \param[in]           input_data                  Pointer to input data for HMAC generation .
- * \param[in]           input_data_length           Length of input data for HMAC generation.
- * \param[in,out]       hmac                        Pointer to buffer to store generated HMAC.
- *
- * \retval              PAL_STATUS_SUCCESS          In case of success
- * \retval              PAL_STATUS_FAILURE          In case of failure
- */ 
-static pal_status_t pal_crypt_hmac(pal_crypt_t* p_pal_crypt,
-                                   uint16_t hmac_type,
-                                   const uint8_t * secret_key,
-                                   uint16_t secret_key_len,
-                                   const uint8_t * input_data,
-                                   uint32_t input_data_length,
-                                   uint8_t * hmac)
-{
-    pal_status_t return_value = PAL_STATUS_FAILURE;
-
-    const mbedtls_md_info_t * hmac_info;
-    mbedtls_md_type_t digest_type;
-    
-    do
-    {
-#ifdef OPTIGA_LIB_DEBUG_NULL_CHECK
-        if ((NULL == input_data) || (NULL == hmac))
-        {
-            break;
-        }
-#endif  //OPTIGA_LIB_DEBUG_NULL_CHECK
-
-        digest_type = (((uint16_t)OPTIGA_HMAC_SHA_256 == hmac_type)? MBEDTLS_MD_SHA256: MBEDTLS_MD_SHA384);
-        
-        hmac_info = mbedtls_md_info_from_type(digest_type);
-
-        if (0 != mbedtls_md_hmac(hmac_info, secret_key, secret_key_len, input_data, input_data_length, hmac))
-        {
-            break;
-        }
-        
-        return_value = PAL_STATUS_SUCCESS;
-
-    } while (FALSE);
-
-    return return_value;
-}
-
-pal_status_t CalcHMAC(const uint8_t * secret_key,
-                           uint16_t secret_key_len,
-                           const uint8_t * input_data,
-                           uint32_t input_data_length,
-                           uint8_t * hmac)
-{
-    return(pal_crypt_hmac(NULL,
-                          (uint16_t)OPTIGA_HMAC_SHA_256,
-                          secret_key,
-                          secret_key_len,
-                          input_data,
-                          input_data_length,
-                          hmac));
-}
-
 static pal_status_t GetAutoValue(optiga_util_t * me_util, uint16_t secret_oid)
 {
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
@@ -261,15 +188,24 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
 {
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     pal_status_t pal_return_status;
+    uint32_t time_taken = 0;
     uint16_t offset, bytes_to_read;
     uint8_t read_data_buffer[100];
     optiga_util_t * me_util = NULL;
     optiga_crypt_t * me_crypt = NULL;
 
-    OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
-
     do
     {
+        
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+        /**
+         * Open the application on OPTIGA which is a precondition to perform any other operations
+         * using optiga_util_open_application
+         */
+        example_optiga_init();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+
+        OPTIGA_EXAMPLE_LOG_MESSAGE(__FUNCTION__);
         /**
          * Create OPTIGA util and crypt Instances
          */
@@ -293,6 +229,8 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
 
         OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(me_crypt,OPTIGA_COMMS_NO_PROTECTION);
         OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(me_crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
+        
+        START_PERFORMANCE_MEASUREMENT(time_taken);
         
         /**
          * Precondition : Get the User Secret and store it in OID
@@ -379,11 +317,13 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
         pal_os_memcpy(&input_data_buffer[sizeof(optional_data) + sizeof(random_data)], arbitrary_data, sizeof(arbitrary_data));
         
         // Function name in line with SRM
-        pal_return_status = CalcHMAC(user_secret,
-                                   sizeof(user_secret),
-                                   input_data_buffer,
-                                   sizeof(input_data_buffer),
-                                   hmac_buffer);
+        pal_return_status = pal_crypt_hmac(NULL,
+                                           (uint16_t)OPTIGA_HMAC_SHA_256,
+                                           user_secret,
+                                           sizeof(user_secret),
+                                           input_data_buffer,
+                                           sizeof(input_data_buffer),
+                                           hmac_buffer);
 
         if (PAL_STATUS_SUCCESS != pal_return_status)
         {
@@ -432,6 +372,8 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
 
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
         
+        READ_PERFORMANCE_MEASUREMENT(time_taken);
+        
         return_status = OPTIGA_LIB_SUCCESS;
 
     } while(FALSE);
@@ -457,6 +399,15 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
+    
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
 }
 #endif

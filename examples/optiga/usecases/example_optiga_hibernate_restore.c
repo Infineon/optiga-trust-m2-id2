@@ -41,8 +41,9 @@
 #include "optiga_example.h"
 #ifdef OPTIGA_COMMS_SHIELDED_CONNECTION 
 //lint --e{526} suppress "the function is defined in example_pair_host_and_optiga_using_pre_shared_secret source file"
-void example_pair_host_and_optiga_using_pre_shared_secret(void);
+extern optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void);
 #endif
+
 /**
  * Callback when optiga_util_xxxx operation is completed asynchronously
  */
@@ -74,7 +75,8 @@ static const uint8_t random_seed [] = {
 void example_optiga_util_hibernate_restore(void)
 {
     optiga_util_t * me_util = NULL;
-    optiga_crypt_t * me_crypt = NULL;
+    optiga_crypt_t * me_crypt = NULL; 
+    uint32_t time_taken = 0;
     uint16_t bytes_to_read = 1;
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     uint8_t security_event_counter = 0;
@@ -100,12 +102,15 @@ void example_optiga_util_hibernate_restore(void)
         {
             break;
         }
-
+        
         /**
          * 1. Open the application on OPTIGA which is a pre-condition to perform any other operations
          *    using optiga_util_open_application
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
+                
+        START_PERFORMANCE_MEASUREMENT(time_taken);
+        
         return_status = optiga_util_open_application(me_util, 0);
 
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
@@ -113,7 +118,13 @@ void example_optiga_util_hibernate_restore(void)
         /**
          * 2. Pairing the Host and OPTIGA using a pre-shared secret
          */
-        example_pair_host_and_optiga_using_pre_shared_secret();
+        return_status = pair_host_and_optiga_using_pre_shared_secret();
+        if(OPTIGA_LIB_SUCCESS != return_status)
+        {
+            //pairing of host and optiga failed
+            break;
+        }
+        
 #endif        
 
         /**
@@ -221,6 +232,9 @@ void example_optiga_util_hibernate_restore(void)
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_close_application(me_util, 0);
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
+        
+        READ_PERFORMANCE_MEASUREMENT(time_taken);
+        
         return_status = OPTIGA_LIB_SUCCESS;
         OPTIGA_EXAMPLE_LOG_MESSAGE("Hibernate feature demonstration completed...\n");
     } while (FALSE);
@@ -247,6 +261,7 @@ void example_optiga_util_hibernate_restore(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
 }
 
 /**
