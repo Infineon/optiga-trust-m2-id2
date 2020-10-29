@@ -43,16 +43,8 @@
 #include "rsa_key_object_confidentiality.h"
 #include "metadata_object_confidentiality.h"
 
-/** @brief Macro to enable secure data update in OID example */
-#define INTEGRITY_PROTECTED                  (0x00)
-/** @brief Macro to enable secure data update in OID with confidentiality example */
-#define CONFIDENTIALITY_PROTECTED            (0x01)
 /** @brief Macro to enable secure AES key update in key object example */
 #define AES_KEY_UPDATE                       (0x02)
-/** @brief Macro to enable secure RSA key update in key object example */
-#define RSA_KEY_UPDATE                       (0x04)
-/** @brief Macro to enable secure metadata update of  OID example */
-#define METADATA_UPDATE                      (0x05)
 
 /**
  * \brief Specifies the structure for protected update manifest and fragment configuration
@@ -169,8 +161,6 @@ typedef struct optiga_protected_update_data_configuration
     /// Pointer to a buffer where continue fragment data is stored.
     const optiga_protected_update_manifest_fragment_configuration_t * data_config;
 }optiga_protected_update_data_configuration_t;
-
-
 
 /**
 * @}

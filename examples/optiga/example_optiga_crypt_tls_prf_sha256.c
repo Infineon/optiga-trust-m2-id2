@@ -141,7 +141,7 @@ void example_optiga_crypt_tls_prf_sha256(void)
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_data(me_util,
-                                               0xF1D0,
+                                               0xF1D1,
                                                OPTIGA_UTIL_ERASE_AND_WRITE ,
                                                0x00,
                                                secret_to_be_written,
@@ -156,7 +156,7 @@ void example_optiga_crypt_tls_prf_sha256(void)
 
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me_util,
-                                                   0xF1D0,
+                                                   0xF1D1,
                                                    metadata,
                                                    sizeof(metadata));
 
@@ -184,7 +184,7 @@ void example_optiga_crypt_tls_prf_sha256(void)
         START_PERFORMANCE_MEASUREMENT(time_taken);
         
         return_status = optiga_crypt_tls_prf_sha256(me,
-                                                    0xF1D0, /* Input secret OID */
+                                                    0xF1D1, /* Input secret OID */
                                                     label,
                                                     sizeof(label),
                                                     random_seed,
@@ -204,7 +204,7 @@ void example_optiga_crypt_tls_prf_sha256(void)
 
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me_util,
-                                                   0xF1D0,
+                                                   0xF1D1,
                                                    default_metadata,
                                                    sizeof(default_metadata));
 
@@ -213,6 +213,15 @@ void example_optiga_crypt_tls_prf_sha256(void)
 
     } while (FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
+    
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY  
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
     if (me)
     {
@@ -235,15 +244,6 @@ void example_optiga_crypt_tls_prf_sha256(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    
-#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    /**
-     * Close the application on OPTIGA after all the operations are executed
-     * using optiga_util_close_application
-     */
-    example_optiga_deinit();
-#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY  
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
 }
 

@@ -132,7 +132,7 @@ const uint8_t target_oid_metadata[] =
         0xD0, 0x03, 0x21, 0xE0, 0xE3,
 }; 
 
-
+#ifdef CONFIDENTIALITY_PROTECTED
 /**
  * Metadata for target OID with confidentiality :
  * Change access condition = Integrity protected using 0xE0E3 & Confidentiality using 0xF1D1
@@ -143,7 +143,9 @@ const uint8_t target_oid_metadata_with_confidentiality[] =
           //0xC1, 0x02, 0x00, 0x00,
           0xD0, 0x07, 0x21, 0xE0, 0xE3, 0xFD, 0x20, 0xF1, 0xD1
 };
+#endif
 
+#ifdef METADATA_UPDATE
 /**
  * Metadata for secure update of target OID metadata with confidentiality :
  * Change access condition = Integrity protected using 0xE0E3 & Confidentiality using 0xF1D1
@@ -153,6 +155,7 @@ const uint8_t target_oid_metadata_for_secure_metadata_update[] =
     0x20, 0x0C,
         0xD8, 0x07, 0x21, 0xE0, 0xE3, 0xFD, 0x20, 0xF1, 0xD1, 0xF0, 0x01, 0x01
 };
+#endif
 
 /**
  * Metadata for Trust Anchor :
@@ -166,6 +169,7 @@ uint8_t trust_anchor_metadata[] =
           0xE8, 0x01, 0x11
 };
 
+#ifdef RSA_KEY_UPDATE
 /**
  * Metadata for target key OID :
  * Change access condition = Integrity protected using 0xE0E3
@@ -178,6 +182,7 @@ const uint8_t target_key_oid_metadata[] =
             0xD0, 0x03, 0x21, 0xE0, 0xE3,
             0xD3, 0x01, 0x00
 };
+#endif
 
 /**
  * Metadata for shared secret OID :
@@ -517,6 +522,15 @@ void example_optiga_util_protected_update(void)
     } while (FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
     
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY 
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
+    
     if (me)
     {
         //Destroy the instance after the completion of usecase if not required.
@@ -527,15 +541,6 @@ void example_optiga_util_protected_update(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    
-#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    /**
-     * Close the application on OPTIGA after all the operations are executed
-     * using optiga_util_close_application
-     */
-    example_optiga_deinit();
-#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY 
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
 }
 
 /**

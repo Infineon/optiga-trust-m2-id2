@@ -1626,6 +1626,11 @@ optiga_cmd_t * optiga_cmd_create(uint8_t optiga_instance_id, callback_handler_t 
     pal_os_lock_enter_critical_section();
     do
     {
+        //lint --e{778} suppress "There is no chance of g_optiga_list become 0."
+        if ( optiga_instance_id > (uint8_t)((sizeof(g_optiga_list)/sizeof(optiga_context_t *)) - 1 ) )
+        {
+            break;
+        }
         // Get number of free slots
         if (0 == optiga_cmd_queue_get_count_of(g_optiga_list[optiga_instance_id],
                                                OPTIGA_CMD_QUEUE_SLOT_STATE,

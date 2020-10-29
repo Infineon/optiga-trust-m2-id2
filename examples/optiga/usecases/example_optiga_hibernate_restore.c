@@ -39,6 +39,9 @@
 #include "optiga/optiga_crypt.h"
 #include "optiga/pal/pal_os_timer.h"
 #include "optiga_example.h"
+
+#if defined (OPTIGA_CRYPT_TLS_PRF_ENABLED) && defined (OPTIGA_CRYPT_RSA_PRE_MASTER_SECRET_ENABLED)
+
 #ifdef OPTIGA_COMMS_SHIELDED_CONNECTION 
 //lint --e{526} suppress "the function is defined in example_pair_host_and_optiga_using_pre_shared_secret source file"
 extern optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void);
@@ -239,6 +242,7 @@ void example_optiga_util_hibernate_restore(void)
         OPTIGA_EXAMPLE_LOG_MESSAGE("Hibernate feature demonstration completed...\n");
     } while (FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
 
     if (me_util)
     {
@@ -261,9 +265,8 @@ void example_optiga_util_hibernate_restore(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
 }
-
+#endif // OPTIGA_CRYPT_RSA_PRE_MASTER_SECRET_ENABLED && OPTIGA_CRYPT_TLS_PRF_ENABLED
 /**
  * @}
  */

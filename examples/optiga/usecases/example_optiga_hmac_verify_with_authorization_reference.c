@@ -69,7 +69,7 @@ const uint8_t secret_oid_metadata[] =
 const uint8_t arbitrary_oid_metadata[] = 
 {
     0x20, 0x05,
-          0xD1, 0x03, 0x23, 0xF1, 0xD0
+          0xD1, 0x03, 0x23, 0xF1, 0xD1
 };
 
 /**
@@ -154,7 +154,7 @@ static pal_status_t GetAutoValue(optiga_util_t * me_util, uint16_t secret_oid)
     do
     {
         /**
-         * 1. Set the metadata of secret OID(0xF1D0) using optiga_util_write_metadata.
+         * 1. Set the metadata of secret OID(0xF1D1) using optiga_util_write_metadata.
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me_util,
@@ -165,7 +165,7 @@ static pal_status_t GetAutoValue(optiga_util_t * me_util, uint16_t secret_oid)
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
 
         /**
-        *  2. Write shared secret in OID 0xF1D0
+        *  2. Write shared secret in OID 0xF1D1
         */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_data(me_util,
@@ -236,7 +236,7 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
          * Precondition : Get the User Secret and store it in OID
          */
         // Function name in line with SRM
-        return_status = GetAutoValue(me_util, 0xF1D0);
+        return_status = GetAutoValue(me_util, 0xF1D1);
         if (OPTIGA_LIB_SUCCESS != return_status)
         {
             break;
@@ -256,7 +256,7 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
         
         /**
-         * Set the metadata of 0xF1E0 to Auto with 0xF1D0.
+         * Set the metadata of 0xF1E0 to Auto with 0xF1D1.
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me_util,
@@ -338,7 +338,7 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_crypt_hmac_verify(me_crypt,
                                                  OPTIGA_HMAC_SHA_256,
-                                                 0xF1D0,
+                                                 0xF1D1,
                                                  input_data_buffer,
                                                  sizeof(input_data_buffer),
                                                  hmac_buffer,
@@ -379,6 +379,15 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
     } while(FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
     
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
+    
     if(me_util)
     {
         //Destroy the instance after the completion of usecase if not required.
@@ -399,15 +408,6 @@ void example_optiga_hmac_verify_with_authorization_reference(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    
-#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    /**
-     * Close the application on OPTIGA after all the operations are executed
-     * using optiga_util_close_application
-     */
-    example_optiga_deinit();
-#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
 }
 #endif

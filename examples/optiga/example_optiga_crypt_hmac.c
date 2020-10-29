@@ -74,7 +74,7 @@ static optiga_lib_status_t write_metadata(optiga_util_t * me)
     {
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me,
-                                                   0xF1D0,
+                                                   0xF1D1,
                                                    input_secret_oid_metadata,
                                                    sizeof(input_secret_oid_metadata));
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
@@ -101,7 +101,7 @@ static optiga_lib_status_t write_input_secret_to_oid()
         }
         /**
          * Precondition 1 :
-         * Metadata for 0xF1D0 :
+         * Metadata for 0xF1D1 :
          * Execute access condition = Always
          * Data object type  =  Pre-shared secret
          */
@@ -114,11 +114,11 @@ static optiga_lib_status_t write_input_secret_to_oid()
 
         /**
         *  Precondition 2 :
-        *  Write secret in OID 0xF1D0
+        *  Write secret in OID 0xF1D1
         */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_data(me_util,
-                                               0xF1D0,
+                                               0xF1D1,
                                                OPTIGA_UTIL_ERASE_AND_WRITE,
                                                0,
                                                input_secret,
@@ -191,7 +191,7 @@ void example_optiga_crypt_hmac(void)
         }
 
         /**
-         * 2. Update input secret in 0xF1D0
+         * 2. Update input secret in 0xF1D1
          *
          */
         return_status = write_input_secret_to_oid();
@@ -209,7 +209,7 @@ void example_optiga_crypt_hmac(void)
         
         return_status = optiga_crypt_hmac_start(me_crypt,
                                                 OPTIGA_HMAC_SHA_256,
-                                                0xF1D0,
+                                                0xF1D1,
                                                 input_data_buffer_start,
                                                 sizeof(input_data_buffer_start));
 
@@ -243,6 +243,15 @@ void example_optiga_crypt_hmac(void)
     } while (FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
     
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY 
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
+    
     if (me_crypt)
     {
         //Destroy the instance after the completion of usecase if not required.
@@ -253,15 +262,6 @@ void example_optiga_crypt_hmac(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    
-#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    /**
-     * Close the application on OPTIGA after all the operations are executed
-     * using optiga_util_close_application
-     */
-    example_optiga_deinit();
-#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY 
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
 }
 

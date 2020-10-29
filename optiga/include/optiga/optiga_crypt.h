@@ -414,7 +414,9 @@ LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_hash_finalize(optiga_crypt_t * 
  * \param[in]         seed                                     Valid pointer to the seed, must not be NULL.
  * \param[in]         seed_length                              Length of the seed.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.  
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -471,7 +473,9 @@ LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_tls_prf(optiga_crypt_t * me,
  * \param[in]         seed                                     Valid pointer to the seed, must not be NULL.
  * \param[in]         seed_length                              Length of the seed.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported. 
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -538,7 +542,9 @@ _STATIC_INLINE LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_tls_prf_sha256(o
  * \param[in]         seed                                     Valid pointer to the seed, must not be NULL.
  * \param[in]         seed_length                              Length of the seed.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -605,7 +611,9 @@ _STATIC_INLINE LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_tls_prf_sha384(o
  * \param[in]         seed                                     Valid pointer to the seed, must not be NULL.
  * \param[in]         seed_length                              Length of the seed.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -1843,7 +1851,9 @@ LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_rsa_encrypt_session(optiga_cryp
  * \param[in]         info                                     Pointer to buffer containing application specific information, can be NULL if not applicable.
  * \param[in]         info_length                              Length of info.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID..
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -1900,7 +1910,9 @@ LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_hkdf(optiga_crypt_t * me,
  * \param[in]         info                                     Pointer to buffer containing application specific information, can be NULL if not applicable.
  * \param[in]         info_length                              Length of info.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -1968,7 +1980,9 @@ _STATIC_INLINE LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_hkdf_sha256(opti
  * \param[in]         info                                     Pointer to buffer containing application specific information, can be NULL if not applicable.
  * \param[in]         info_length                              Length of info.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,
@@ -2037,7 +2051,9 @@ _STATIC_INLINE LIBRARY_EXPORTS optiga_lib_status_t optiga_crypt_hkdf_sha384(opti
  * \param[in]         info                                     Pointer to buffer containing application specific information, can be NULL if not applicable.
  * \param[in]         info_length                              Length of info.
  * \param[in]         derived_key_length                       Length of derived key.
- *                                                             - The minimum length of the output derived key can be 1 byte, if derived key is exported.
+ *                                                             - Export to Host : The minimum length of the derived key can be 1 byte.
+ *                                                             - Save in Sesssion OID : The minimum length of the derived key should be 16 bytes. <br>
+ *                                                             For derived key lengths from 1 to 15, OPTIGA derives 16 bytes key in the session OID.
  * \param[in]         export_to_host                           TRUE (1) or Non-Zero value - Exports the derived key to Host. <br>
  *                                                             FALSE (0) - Stores the derived key into the session object ID acquired by the instance.
  * \param[in,out]     derived_key                              Pointer to the valid buffer with a minimum size of derived_key_length,

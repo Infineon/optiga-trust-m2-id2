@@ -64,6 +64,7 @@ static void queue_recv_task(void *p)
 {
     register_callback callback;
     pal_os_event_clbs_t clbs;
+	///If callback_ctx is NULL then callback function will have unexpected behavior
     while(1)
     {
         if ( 0 == espos_queue_recv(global_queue, &clbs, ESPOS_NO_DELAY) )
@@ -114,7 +115,7 @@ void pal_os_event_trigger_registered_callback(void)
 
     // !!!OPTIGA_LIB_PORTING_REQUIRED
     // The following steps related to TIMER must be taken care while porting to different platform
-    //lint --e{534} suppress "Error handling is not required so return value is not checked"
+    // lint --e{534} suppress "Error handling is not required so return value is not checked"
     while (exit)
     {
         if (0 == espos_mutex_lock(global_mutex, ESPOS_MAX_DELAY))

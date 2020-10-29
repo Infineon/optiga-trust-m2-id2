@@ -160,22 +160,22 @@ void example_optiga_crypt_clear_auto_state(void)
         OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(me_crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
         
         /**
-         * 3. Set the metadata of secret OID(0xF1D0) using optiga_util_write_metadata.
+         * 3. Set the metadata of secret OID(0xF1D1) using optiga_util_write_metadata.
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_metadata(me_util,
-                                                   0xF1D0,
+                                                   0xF1D1,
                                                    secret_oid_metadata,
                                                    sizeof(secret_oid_metadata));
 
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
 
         /**
-        *  4. Write shared secret in OID 0xF1D0
+        *  4. Write shared secret in OID 0xF1D1
         */
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_util_write_data(me_util,
-                                               0xF1D0,
+                                               0xF1D1,
                                                OPTIGA_UTIL_ERASE_AND_WRITE,
                                                0,
                                                user_secret,
@@ -223,7 +223,7 @@ void example_optiga_crypt_clear_auto_state(void)
         optiga_lib_status = OPTIGA_LIB_BUSY;
         return_status = optiga_crypt_hmac_verify(me_crypt,
                                                  OPTIGA_HMAC_SHA_256,
-                                                 0xF1D0,
+                                                 0xF1D1,
                                                  input_data_buffer,
                                                  sizeof(input_data_buffer),
                                                  hmac_buffer,
@@ -237,7 +237,7 @@ void example_optiga_crypt_clear_auto_state(void)
         START_PERFORMANCE_MEASUREMENT(time_taken);
         
         return_status = optiga_crypt_clear_auto_state(me_crypt,
-                                                      0xF1D0);
+                                                      0xF1D1);
         WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
         
         READ_PERFORMANCE_MEASUREMENT(time_taken);
@@ -246,6 +246,15 @@ void example_optiga_crypt_clear_auto_state(void)
 
     } while(FALSE);
     OPTIGA_EXAMPLE_LOG_STATUS(return_status);
+    
+#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    /**
+     * Close the application on OPTIGA after all the operations are executed
+     * using optiga_util_close_application
+     */
+    example_optiga_deinit();
+#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
+    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
     if(me_util)
     {
@@ -267,15 +276,6 @@ void example_optiga_crypt_clear_auto_state(void)
             OPTIGA_EXAMPLE_LOG_STATUS(return_status);
         }
     }
-    
-#ifndef OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    /**
-     * Close the application on OPTIGA after all the operations are executed
-     * using optiga_util_close_application
-     */
-    example_optiga_deinit();
-#endif //OPTIGA_INIT_DEINIT_DONE_EXCLUSIVELY
-    OPTIGA_EXAMPLE_LOG_PERFORMANCE_VALUE(time_taken, return_status);
     
 }
 #endif //(OPTIGA_CRYPT_GENERATE_AUTH_CODE_ENABLED) && (OPTIGA_CRYPT_HMAC_VERIFY_ENABLED) && (OPTIGA_CRYPT_CLEAR_AUTO_STATE_ENABLED)
