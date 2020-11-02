@@ -176,9 +176,9 @@ The [Alibaba Cloud IoT with OPTIGA™ Trust M2 ID2](https://github.com/Infineon/
 For high level description and some important excerpts from the documentation please refer to [Wiki page](https://github.com/Infineon/optiga-trust-m2-id2/wiki)
 
 Other downloadable PDF documents can be found below:
-1. [OPTIGA Trust M2 ID2 V2 Datasheet v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Datasheet_v2.00.pdf) (PDF)
-2. [OPTIGA Trust M2 ID2 V2 Solution Reference Manual v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Solution_Reference_Manual_v2.00.pdf) (PDF)
-4. [Infineon I2C protocol specification v2.02](documents/Infineon_I2C_Protocol_v2.02.pdf) (PDF)
+1. [OPTIGA Trust M2 ID2 V2 Datasheet v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Datasheet_v2.10.pdf) (PDF)
+2. [OPTIGA Trust M2 ID2 V2 Solution Reference Manual v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Solution_Reference_Manual_v2.15.pdf) (PDF)
+4. [Infineon I2C protocol specification v2.02](documents/Infineon_I2C_Protocol_v2.03.pdf) (PDF)
 
 ### Board assembly recommendations
 
