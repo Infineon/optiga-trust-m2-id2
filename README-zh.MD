@@ -176,9 +176,9 @@ OPTIGA™Trust M2 ID2是一种基于安全微控制器的安全解决方案。�
 关于文档的概要描述和一些关键摘要，请参考[Wiki页面](https://github.com/Infineon/optiga-trust-m2-id2/wiki)
 
 其余可下载的PDF文档可从如下路径中获得:
-1. [OPTIGA Trust M2 ID2 V2 Datasheet v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Datasheet_v2.00.pdf) (PDF)
-2. [OPTIGA Trust M2 ID2 V2 Solution Reference Manual v2.00](documents/OPTIGA_Trust_M2_ID2_V2_Solution_Reference_Manual_v2.00.pdf) (PDF)
-4. [Infineon I2C protocol specification v2.02](documents/Infineon_I2C_Protocol_v2.02.pdf) (PDF)
+1. [OPTIGA Trust M2 ID2 V2 Datasheet v2.10](documents/OPTIGA_Trust_M2_ID2_V2_Datasheet_v2.10.pdf) (PDF)
+2. [OPTIGA Trust M2 ID2 V2 Solution Reference Manual v2.15](documents/OPTIGA_Trust_M2_ID2_V2_Solution_Reference_Manual_v2.15.pdf) (PDF)
+3. [Infineon I2C protocol specification v2.03](documents/Infineon_I2C_Protocol_v2.03.pdf) (PDF)
 
 ### PCB板设计指南
 
