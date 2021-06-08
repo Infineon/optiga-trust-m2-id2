@@ -1,0 +1,872 @@
+Subject: [PATCH] Added optiga shell application with shielded connection
+ enabled
+
+---
+ .../optiga/projects/esp32_alios/Config.in     |   9 ++
+ .../optiga/projects/esp32_alios/aos.mk        |  78 ++++++++++
+ app/example/Config.in                         |   5 +
+ app/example/README.md                         |   1 +
+ app/example/optiga_shell_app/Config.in        |   9 ++
+ app/example/optiga_shell_app/README.md        |  50 ++++++
+ app/example/optiga_shell_app/aos.mk           |  10 ++
+ app/example/optiga_shell_app/k_app_config.h   |   6 +
+ app/example/optiga_shell_app/optiga_app.c     |  24 +++
+ app/example/optiga_shell_app/ucube.py         |   7 +
+ board/esp32devkitc/Config.in                  |   8 +
+ board/esp32devkitc/k_config.h                 |   2 +-
+ board/esp32sram/ucube.py                      |   2 +-
+ build/build_rules/aos_target_config.mk        |   1 +
+ .../toolchain/aos_toolchain_xtensa.mk         |   2 +-
+ include/aos/hal/i2c.h                         |   2 +
+ platform/mcu/esp32/aos.mk                     |   2 +-
+ platform/mcu/esp32/hal/i2c.c                  | 146 ++++++++++++++----
+ security/Config.in                            |   3 +-
+ security/id2/aos.mk                           |   2 +-
+ security/irot/Config.in                       |   6 +-
+ security/irot/se/aos.mk                       |   3 +
+ .../se/chipset/chip_template/chip_config.h    |   7 +-
+ security/irot/se/src/core/km_to_irot.c        |   3 +
+ security/itls/src/mbedtls_alt.c               |  38 ++++-
+ 25 files changed, 378 insertions(+), 48 deletions(-)
+ create mode 100644 3rdparty/experimental/optiga/projects/esp32_alios/Config.in
+ create mode 100644 3rdparty/experimental/optiga/projects/esp32_alios/aos.mk
+ create mode 100644 app/example/optiga_shell_app/Config.in
+ create mode 100644 app/example/optiga_shell_app/README.md
+ create mode 100644 app/example/optiga_shell_app/aos.mk
+ create mode 100644 app/example/optiga_shell_app/k_app_config.h
+ create mode 100644 app/example/optiga_shell_app/optiga_app.c
+ create mode 100644 app/example/optiga_shell_app/ucube.py
+
+diff --git a/3rdparty/experimental/optiga/projects/esp32_alios/Config.in b/3rdparty/experimental/optiga/projects/esp32_alios/Config.in
+new file mode 100644
+index 000000000..637b43c10
+--- /dev/null
++++ b/3rdparty/experimental/optiga/projects/esp32_alios/Config.in
+@@ -0,0 +1,9 @@
++config AOS_COMP_OPTIGA
++    bool "Root of trust, OPTIGA"
++    default y
++    help
++        Select if optiga_se_adapter is enabled
++
++#if AOS_COMP_OPTIGA
++# Configurations for component optiga
++#endif
+diff --git a/3rdparty/experimental/optiga/projects/esp32_alios/aos.mk b/3rdparty/experimental/optiga/projects/esp32_alios/aos.mk
+new file mode 100644
+index 000000000..5ae976d60
+--- /dev/null
++++ b/3rdparty/experimental/optiga/projects/esp32_alios/aos.mk
+@@ -0,0 +1,78 @@
++
++NAME := optiga
++
++$(NAME)_MBINS_TYPE := kernal
++$(NAME)_VERSION := 1.0.0
++$(NAME)_SUMMARY := infineon optiga host library implimentation
++$(NAME)_COMPONENTS := imbedtls alicrypto
++
++LIBOPTIGA := ./../..
++
++$(NAME)_INCLUDES     += $(LIBOPTIGA)/optiga/include
++$(NAME)_INCLUDES     += $(LIBOPTIGA)/examples/optiga/include
++GLOBAL_INCLUDES += $(ESP_INC_PATH)/driver/include
++$(NAME)_INCLUDES     += $(LIBOPTIGA)/externals/mbedtls/include/
++
++$(NAME)_DEFINES     += IFX_I2C_FRAME_SIZE=20
++
++$(NAME)_SOURCES += \
++    $(LIBOPTIGA)/optiga/cmd/optiga_cmd.c \
++    $(LIBOPTIGA)/optiga/util/optiga_util.c \
++    $(LIBOPTIGA)/optiga/crypt/optiga_crypt.c \
++    $(LIBOPTIGA)/optiga/common/optiga_lib_common.c \
++    $(LIBOPTIGA)/optiga/common/optiga_lib_logger.c \
++    $(LIBOPTIGA)/optiga/comms/optiga_comms_ifx_i2c.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c_config.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c_data_link_layer.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c_physical_layer.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c_presentation_layer.c \
++    $(LIBOPTIGA)/optiga/comms/ifx_i2c/ifx_i2c_transport_layer.c \
++    $(LIBOPTIGA)/examples/optiga/usecases/example_ali_id2_key_update.c \
++    $(LIBOPTIGA)/examples/optiga/usecases/example_ali_id2_rsa_key_update.c \
++    $(LIBOPTIGA)/examples/optiga/usecases/example_optiga_hibernate_restore.c \
++    $(LIBOPTIGA)/examples/optiga/example_pair_host_and_optiga_using_pre_shared_secret.c \
++    $(LIBOPTIGA)/examples/optiga/usecases/example_read_coprocessor_id.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_hmac_verify_with_authorization_reference.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_hash.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_hkdf.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_hmac.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_random.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_decrypt.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_encrypt_message.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_encrypt_session.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_generate_keypair.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_sign.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_rsa_verify.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_symmetric_encrypt_decrypt.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_symmetric_encrypt_decrypt_ecb.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_symmetric_generate_key.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_tls_prf_sha256.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_util_protected_update.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_util_read_data.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_util_update_count.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_util_write_data.c \
++    $(LIBOPTIGA)/examples/optiga/example_utilities.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_init_deinit.c \
++    $(LIBOPTIGA)/examples/optiga/example_optiga_crypt_clear_auto_state.c \
++    $(LIBOPTIGA)/examples/optiga_shell.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_gpio.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_i2c.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_ifx_i2c_config.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_logger.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_datastore.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_event.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_lock.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_memory.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_random.c \
++    $(LIBOPTIGA)/pal/esp32_devkitc_alios/pal_os_timer.c \
++    $(LIBOPTIGA)/pal/pal_crypt_mbedtls.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/aes.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/ccm.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/cipher.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/cipher_wrap.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/md.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/md_wrap.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/sha256.c \
++    $(LIBOPTIGA)/externals/mbedtls/library/platform_util.c \
+diff --git a/app/example/Config.in b/app/example/Config.in
+index 2c04e3c19..23b706ce3 100644
+--- a/app/example/Config.in
++++ b/app/example/Config.in
+@@ -217,6 +217,11 @@ if AOS_APP_UDATA_CLOUD_DEMO
+         default "udata_demo.udata_cloud_demo"
+ endif
+ 
++source "app/example/optiga_shell_app/Config.in"
++if AOS_APP_OPTIGA_SHELL_APP
++    config AOS_BUILD_APP
++        default "optiga_shell_app"
++endif
+ 
+ endchoice
+ endif
+diff --git a/app/example/README.md b/app/example/README.md
+index bd5580a8d..560cafbee 100644
+--- a/app/example/README.md
++++ b/app/example/README.md
+@@ -17,5 +17,6 @@ example
+ ├── tinyengine_app   # TinyEngine builtin OS image
+ ├── tls              # TLS sample
+ ├── udataapp         # uData demo application
++├── optiga_app       # OPTIGA sell application
+ └── yts
+ ```
+diff --git a/app/example/optiga_shell_app/Config.in b/app/example/optiga_shell_app/Config.in
+new file mode 100644
+index 000000000..cd49ba81e
+--- /dev/null
++++ b/app/example/optiga_shell_app/Config.in
+@@ -0,0 +1,9 @@
++config AOS_APP_OPTIGA_SHELL_APP
++    bool "OPTIGA shell application"
++    select AOS_COMP_OSAL_AOS
++    help
++        optiga examples
++
++if AOS_APP_OPTIGA_SHELL_APP
++# Configurations for optiga shell application
++endif
+diff --git a/app/example/optiga_shell_app/README.md b/app/example/optiga_shell_app/README.md
+new file mode 100644
+index 000000000..5e651c67a
+--- /dev/null
++++ b/app/example/optiga_shell_app/README.md
+@@ -0,0 +1,50 @@
++## Contents
++
++```sh
++optiga_shell_app
++├── optiga_app.c    # optiga_shell_app source code
++├── Config.in       # kconfig file
++├── aos.mk          # aos build system file(for make)
++├── k_app_config.h  # aos app config file
++└── ucube.py        # aos build system file(for scons)
++```
++
++## Introduction
++
++The **optiga_shell_app** example will print `hello world` and other information every 5 seconds, the example is simple.
++
++### Dependencies
++
++* yloop
++* cli
++* optiga
++
++### Supported Boards
++
++- all
++
++### Build
++
++```sh
++# generate optiga_shell_app@developerkit default config
++aos make optiga_shell_app@developerkit -c config
++
++# or customize config manually
++aos make menuconfig
++
++# build
++aos make
++```
++
++> if you want to see AliOS-Things supports boards, click [board](../../../board).
++
++### Install
++
++```sh
++aos upload
++```
++
++> if you are not sure is the`aos upload` command supports your board, check [aos upload](../../../build/site_scons/upload).
++
++
++
+diff --git a/app/example/optiga_shell_app/aos.mk b/app/example/optiga_shell_app/aos.mk
+new file mode 100644
+index 000000000..57617e853
+--- /dev/null
++++ b/app/example/optiga_shell_app/aos.mk
+@@ -0,0 +1,10 @@
++NAME := optiga_shell_app
++
++$(NAME)_MBINS_TYPE := app
++$(NAME)_VERSION := 1.0.0
++$(NAME)_SUMMARY := optiga examples
++
++$(NAME)_SOURCES := optiga_app.c
++$(NAME)_COMPONENTS +=
++
++GLOBAL_INCLUDES += ./
+\ No newline at end of file
+diff --git a/app/example/optiga_shell_app/k_app_config.h b/app/example/optiga_shell_app/k_app_config.h
+new file mode 100644
+index 000000000..1ad28ea81
+--- /dev/null
++++ b/app/example/optiga_shell_app/k_app_config.h
+@@ -0,0 +1,6 @@
++
++
++/* user space */
++#ifndef RHINO_CONFIG_USER_SPACE
++#define RHINO_CONFIG_USER_SPACE              0
++#endif
+diff --git a/app/example/optiga_shell_app/optiga_app.c b/app/example/optiga_shell_app/optiga_app.c
+new file mode 100644
+index 000000000..22b33871a
+--- /dev/null
++++ b/app/example/optiga_shell_app/optiga_app.c
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (C) 2015-2017 Alibaba Group Holding Limited
++ */
++
++#include <stdio.h>
++
++#include <aos/kernel.h>
++
++extern void optiga_shell_wait_for_user(void);
++extern void optiga_shell_begin(void);
++
++int application_start(int argc, char *argv[])
++{
++    int count = 0;
++    //printf("nano entry here!\r\n");
++    //scanf("# Enter count number %d", &count);
++
++  //  while(count) {
++        optiga_shell_wait_for_user();
++        optiga_shell_begin();
++
++        aos_msleep(1000);
++  //  };
++}
+diff --git a/app/example/optiga_shell_app/ucube.py b/app/example/optiga_shell_app/ucube.py
+new file mode 100644
+index 000000000..9a1532842
+--- /dev/null
++++ b/app/example/optiga_shell_app/ucube.py
+@@ -0,0 +1,7 @@
++src     = Split('''
++        optiga_app.c
++''')
++
++component = aos_component('optiga_app', src)
++component.add_comp_deps('kernel/yloop', 'kernel/cli')
++component.add_global_macros('AOS_NO_WIFI')
+diff --git a/board/esp32devkitc/Config.in b/board/esp32devkitc/Config.in
+index bee088a5f..a5f5529c8 100644
+--- a/board/esp32devkitc/Config.in
++++ b/board/esp32devkitc/Config.in
+@@ -59,4 +59,12 @@ config BSP_SUPPORT_WDG
+     bool
+     default y
+ 
++# link security config
++config CONFIG_LS_DEBUG
++    bool
++    default n
++config CONFIG_LS_KM_SE
++    bool
++    default y
++
+ endif
+diff --git a/board/esp32devkitc/k_config.h b/board/esp32devkitc/k_config.h
+index 7b4731c28..fcfff5446 100644
+--- a/board/esp32devkitc/k_config.h
++++ b/board/esp32devkitc/k_config.h
+@@ -71,7 +71,7 @@
+ 
+ /* kernel timer&tick conf */
+ #ifndef RHINO_CONFIG_TICKS_PER_SECOND
+-#define RHINO_CONFIG_TICKS_PER_SECOND        100
++#define RHINO_CONFIG_TICKS_PER_SECOND        1000
+ #endif
+ #ifndef RHINO_CONFIG_TIMER_TASK_STACK_SIZE
+ #define RHINO_CONFIG_TIMER_TASK_STACK_SIZE   768
+diff --git a/board/esp32sram/ucube.py b/board/esp32sram/ucube.py
+index 6b00b5af9..d20f168f1 100644
+--- a/board/esp32sram/ucube.py
++++ b/board/esp32sram/ucube.py
+@@ -6,4 +6,4 @@ if aos_global_config.get('hci_h4', 0):
+     component.add_global_macros('CONFIG_BLE_HCI_H4_UART_PORT=1')
+ 
+ 
+-linux_only_targets="athostapp blink bluetooth.bleadv bluetooth.bleperipheral bluetooth.breezeapp coapapp helloworld http2app linkkit_gateway linkkitapp meshapp mqttapp otaapp tls udataapp udevapp ulocationapp yts"
++linux_only_targets="athostapp blink bluetooth.bleadv bluetooth.bleperipheral bluetooth.breezeapp coapapp helloworld http2app linkkit_gateway linkkitapp meshapp mqttapp otaapp tls udataapp udevapp ulocationapp yts optiga_shell_app"
+diff --git a/build/build_rules/aos_target_config.mk b/build/build_rules/aos_target_config.mk
+index 665f10d4f..94d8dbaed 100644
+--- a/build/build_rules/aos_target_config.mk
++++ b/build/build_rules/aos_target_config.mk
+@@ -18,6 +18,7 @@ CONFIG_FILE := $(CONFIG_FILE_DIR)/config.mk
+ DEPENDENCY_DICT :=
+ 
+ COMPONENT_DIRECTORIES := . \
++						 3rdparty/experimental/optiga/projects/esp32_alios	\
+                          app/example   \
+                          app/profile   \
+                          board     \
+diff --git a/build/build_rules/toolchain/aos_toolchain_xtensa.mk b/build/build_rules/toolchain/aos_toolchain_xtensa.mk
+index 70225f9a9..3ece35b8f 100644
+--- a/build/build_rules/toolchain/aos_toolchain_xtensa.mk
++++ b/build/build_rules/toolchain/aos_toolchain_xtensa.mk
+@@ -51,7 +51,7 @@ OPTIONS_IN_FILE_OPTION    := @
+ ADD_COMPILER_SPECIFIC_STANDARD_CFLAGS   = $(1) $(if $(filter yes,$(MXCHIP_INTERNAL) $(TESTER)),-Werror)
+ ADD_COMPILER_SPECIFIC_STANDARD_CXXFLAGS = $(1) $(if $(filter yes,$(MXCHIP_INTERNAL) $(TESTER)),-Werror)
+ ADD_COMPILER_SPECIFIC_STANDARD_ADMFLAGS = $(1)
+-COMPILER_SPECIFIC_OPTIMIZED_CFLAGS    := -Os
++COMPILER_SPECIFIC_OPTIMIZED_CFLAGS    := -O0
+ COMPILER_SPECIFIC_UNOPTIMIZED_CFLAGS  := -O0
+ COMPILER_SPECIFIC_PEDANTIC_CFLAGS  := $(COMPILER_SPECIFIC_STANDARD_CFLAGS)
+ COMPILER_SPECIFIC_ARFLAGS_CREATE   := -rcs
+diff --git a/include/aos/hal/i2c.h b/include/aos/hal/i2c.h
+index fe425ec0c..b68ea6629 100644
+--- a/include/aos/hal/i2c.h
++++ b/include/aos/hal/i2c.h
+@@ -52,6 +52,8 @@ typedef struct {
+  */
+ int32_t hal_i2c_init(i2c_dev_t *i2c);
+ 
++int32_t hal_i2c_get_status(i2c_dev_t * i2c);
++
+ /**
+  * I2c master send
+  *
+diff --git a/platform/mcu/esp32/aos.mk b/platform/mcu/esp32/aos.mk
+index ce2cc1866..782c808a5 100644
+--- a/platform/mcu/esp32/aos.mk
++++ b/platform/mcu/esp32/aos.mk
+@@ -6,7 +6,7 @@ $(NAME)_MBINS_TYPE := kernel
+ $(NAME)_VERSION    := 1.0.0
+ $(NAME)_SUMMARY    := driver & sdk for platform/mcu esp32
+ 
+-$(NAME)_COMPONENTS += lwip alicrypto imbedtls netmgr
++$(NAME)_COMPONENTS += lwip alicrypto netmgr
+ 
+ ESP_INC_PATH    := bsp/include
+ GLOBAL_INCLUDES += $(ESP_INC_PATH)
+diff --git a/platform/mcu/esp32/hal/i2c.c b/platform/mcu/esp32/hal/i2c.c
+index d59604fb6..fa0dc48bc 100644
+--- a/platform/mcu/esp32/hal/i2c.c
++++ b/platform/mcu/esp32/hal/i2c.c
+@@ -17,6 +17,8 @@
+ #include "soc/i2c_struct.h"
+ #include "soc/dport_reg.h"
+ #include "driver/gpio.h"
++#include "ulog/ulog.h"
++#include "ulog_api.h"
+ 
+ #define	 I2C_CMD_MAX		(16u)
+ 
+@@ -43,7 +45,7 @@ typedef struct i2c_resource {
+ 
+ 
+ static i2c_resource_t g_dev[I2C_NUM_MAX] = {
+-    {(volatile i2c_dev_t *)0x60013000,23,22},
++    {(volatile i2c_dev_t *)0x60013000,22,21},
+     {(volatile i2c_dev_t *)0x60027000,19,18}
+ };
+ 
+@@ -201,15 +203,24 @@ static int32_t i2c_write_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width
+     uint16_t send_counts = 0;
+     uint16_t packet_size = 0;
+     uint16_t send_len = 0;
++    uint8_t index = 0;
++    uint8_t count = 0;
++    unsigned long long start;
++
++    i2c_start_prepare(handle);
++    index += 1;
++    i2c_config_cmd(handle,0,I2C_CMD_RSTART,0,false,false,false);
++    i2c_send_addr(handle,1,dev_addr,add_width);
++    while(handle->status_reg.tx_fifo_cnt < index);
++
+     while(total_size) {
+-        packet_size = (total_size > 32) ? 32 : total_size;
++        packet_size = (total_size > 28) ? 28 : total_size;
++
++
+         send_len = packet_size;
+-        i2c_start_prepare(handle);
+-        i2c_config_cmd(handle,0,I2C_CMD_RSTART,0,false,false,false);
+         uint8_t index = 0;
+         while(send_len) {
+             if(0 == send_counts) {
+-                i2c_send_addr(handle,1,dev_addr,add_width);
+                 send_len -= (add_width)?(2):(1);
+             }
+             index += 1;
+@@ -218,16 +229,31 @@ static int32_t i2c_write_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width
+             send_counts += 1;
+             send_len -= 1;
+         }
+-        i2c_config_cmd(handle,1,I2C_CMD_WRITE,packet_size,true,false,false);
++        //send_len -= 1;
++        if(count == 0) {
++            i2c_config_cmd(handle,1,I2C_CMD_WRITE,packet_size,true,false,false);
++        } else {
++            i2c_config_cmd(handle,0,I2C_CMD_WRITE,packet_size,true,false,false);
++        }
++
+         total_size -= packet_size;
+ 
+-        if(total_size || !need_stop) {
+-            i2c_config_cmd(handle,2,I2C_CMD_END,0,false,false,false);
+-        } else if(need_stop) {
++        if(total_size) {
++            if (count == 0)
++            {
++                i2c_config_cmd(handle,2,I2C_CMD_END,0,false,false,false);
++            }
++            else
++            {
++                i2c_config_cmd(handle,1,I2C_CMD_END,0,false,false,false);
++            }
++
++            count++;
++        } else if(len <= 28 ) {
+             i2c_config_cmd(handle,2,I2C_CMD_STOP,0,false,false,false);
+         }
+         handle->ctr.trans_start = 1;
+-        unsigned long long start = krhino_sys_time_get();
++        start = krhino_sys_time_get();
+         do {
+             if(0 != i2c_check_status(handle)) {
+                 break;
+@@ -236,13 +262,28 @@ static int32_t i2c_write_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width
+                 break;
+             }
+         } while(krhino_sys_time_get()-start < 20);
++
++        if(count > 1 && total_size == 0)
++        {
++            i2c_config_cmd(handle,0,I2C_CMD_STOP,0,false,false,false);
++            handle->ctr.trans_start = 1;
++            start = krhino_sys_time_get();
++            do {
++                if(0 != i2c_check_status(handle)) {
++                    break;
++                }
++                if((need_stop && handle->command[2].done) || !handle->status_reg.bus_busy) {
++                    break;
++                }
++            } while(krhino_sys_time_get()-start < 20);
++        }
+     }
+ 
+     return 0;
+ 
+ }
+ 
+-
++static uint8_t temp_count = 0;
+ static int32_t i2c_read_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width,uint8_t * buff,uint32_t len,int8_t need_stop)
+ {
+     if(NULL == handle || NULL == buff || len == 0) {
+@@ -256,7 +297,14 @@ static int32_t i2c_read_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width,
+     uint8_t nextCmdCount = 0;
+     uint8_t currentCmdIdx = 0;
+     uint8_t cmd_index = 0;
++    uint8_t busystate[] = {0xFF, 0xFF, 0xFF, 0xFF};
++    uint32_t fifo_cnt = 0, requested_len = 0, received_len = 0;
++    uint32_t i;
+     uint16_t dev_addr = (addr << 1) | 1;
++    volatile uint8_t temp_len;
++    uint8_t count = 0;
++
++    memset (buff, 0, len);
+     i2c_start_prepare(handle);
+     i2c_config_cmd(handle,cmd_index,I2C_CMD_RSTART,0,false,false,false);
+     cmd_index = (cmd_index+1)%I2C_CMD_MAX;
+@@ -264,21 +312,52 @@ static int32_t i2c_read_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width,
+     i2c_config_cmd(handle,cmd_index,I2C_CMD_WRITE,add_width?2:1,true,false,false);
+     cmd_index = (cmd_index+1)%I2C_CMD_MAX;
+     nextCmdCount = cmd_index;
++
++    //while(handle->status_reg.bus_busy);
++    if(len > 1) {
++        temp_len = (len > 19)? 19:(len-1);
++        i2c_config_cmd(handle, cmd_index, I2C_CMD_READ, temp_len, true, false, false);
++        cmd_index = (cmd_index+1)%I2C_CMD_MAX;
++        nextCmdCount++;
++        len -= temp_len;
++        requested_len += temp_len;
++    }
++    if(len == 1) {
++        i2c_config_cmd(handle, cmd_index, I2C_CMD_READ, 1, false, false, (len==1));
++        cmd_index = (cmd_index+1)%I2C_CMD_MAX;
++        nextCmdCount++;
++        len -= 1;
++        temp_len = 1;
++        requested_len += temp_len;
++    }
++
++    i2c_config_cmd(handle, cmd_index, I2C_CMD_STOP, 0, false, false, false);
++
+     handle->ctr.trans_start = 1;
++
+     while(is_run) {
+         uint32_t startAt = krhino_sys_time_get();
+         do {
+-
+             if(0 != i2c_check_status(handle)) {
+-                return (-1);
++                //memcpy(buff, busystate, sizeof(busystate));
++                //handle->int_clr.val = 0xFFFFFFFF;
++                return (0);
+             }
+ 
+             if(handle->command[currentCmdIdx].done) {
+-                nextCmdCount--;
++                //nextCmdCount--;
+                 if (handle->command[currentCmdIdx].op_code == I2C_CMD_READ) {
+-                    if(currentCmdIdx >= 2) {
++                    while(fifo_cnt != requested_len)
++                    {
++                        for (i = 0; i < 400; i++);
++                        fifo_cnt = handle->status_reg.rx_fifo_cnt;
++                    }
++                    while(count < fifo_cnt)
++                    {
+                         buff[index++] = handle->fifo_data.val & 0xFF;
++                        count++;
+                     }
++                    //requested_len -= fifo_cnt;
+                     handle->fifo_conf.tx_fifo_rst = 1;
+                     handle->fifo_conf.tx_fifo_rst = 0;
+                     handle->fifo_conf.rx_fifo_rst = 1;
+@@ -287,20 +366,7 @@ static int32_t i2c_read_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width,
+                     is_run = 0;
+                     break;
+                 }
+-                currentCmdIdx = (currentCmdIdx+1)%I2C_CMD_MAX;
+-                if(nextCmdCount < 2) {
+-                    if(len > 0) {
+-                        i2c_config_cmd(handle, cmd_index, I2C_CMD_READ, 1, false, false, (len==1));
+-                        cmd_index = (cmd_index+1)%I2C_CMD_MAX;
+-                        nextCmdCount++;
+-                        len -= 1;
+-                    } else {
+-                        i2c_config_cmd(handle, cmd_index, I2C_CMD_STOP, 0, false, false, false);
+-                        cmd_index = (cmd_index+1)%I2C_CMD_MAX;
+-                        nextCmdCount++;
+-                    }
+-                }
+-                break;
++                currentCmdIdx++;
+             }
+         } while(krhino_sys_time_get() - startAt < 20);
+     }
+@@ -308,13 +374,13 @@ static int32_t i2c_read_bytes(i2c_dev_t * handle,uint16_t addr,int8_t add_width,
+     return (0);
+ }
+ 
+-
+ int32_t hal_i2c_init(aos_i2c_dev_t *i2c)
+ {
+     int32_t ret = 0;
+     if(NULL == i2c || (I2C_NUM_0 != i2c->port)&&(I2C_NUM_1 != i2c->port)) {
+         return (-1);
+     }
++    
+     i2c_resource_t * resource = &g_dev[i2c->port];
+     i2c_config_pin(i2c->port,resource->sda_io,resource->scl_io);
+     i2c_config_ctr(resource->dev,i2c->config.freq);
+@@ -322,6 +388,22 @@ int32_t hal_i2c_init(aos_i2c_dev_t *i2c)
+     return ret;
+ }
+ 
++int32_t hal_i2c_get_status(aos_i2c_dev_t * i2c)
++{
++    int32_t ret = 0;
++
++    if(NULL == i2c || (I2C_NUM_0 != i2c->port)&&(I2C_NUM_1 != i2c->port)) {
++        return (-1);
++    }
++
++    i2c_dev_t * handle =  g_dev[i2c->port].dev;
++
++    if(0 != i2c_check_status(handle)) {
++        ret = -1;
++    }
++    return ret;
++}
++
+ int32_t hal_i2c_master_send(aos_i2c_dev_t *i2c, uint16_t dev_addr, const uint8_t *data,uint16_t size, uint32_t timeout)
+ {
+     int32_t ret = 0;
+@@ -330,7 +412,7 @@ int32_t hal_i2c_master_send(aos_i2c_dev_t *i2c, uint16_t dev_addr, const uint8_t
+     }
+     i2c_resource_t * resource = &g_dev[i2c->port];
+     uint16_t addr = dev_addr >> 1;
+-    i2c_write_bytes(resource->dev,addr,i2c->config.address_width == I2C_MEM_ADDR_SIZE_16BIT,(uint8_t *)data,size,0);
++    ret = i2c_write_bytes(resource->dev,addr,i2c->config.address_width == I2C_MEM_ADDR_SIZE_8BIT,(uint8_t *)data,size,0);
+ 
+     return ret;
+ }
+@@ -343,7 +425,7 @@ int32_t hal_i2c_master_recv(aos_i2c_dev_t *i2c, uint16_t dev_addr, uint8_t *data
+     }
+     i2c_resource_t * resource = &g_dev[i2c->port];
+     uint16_t addr = dev_addr >> 1;
+-    i2c_read_bytes(resource->dev,addr,i2c->config.address_width == I2C_MEM_ADDR_SIZE_16BIT,(uint8_t *)data,size,0);
++    ret = i2c_read_bytes(resource->dev,addr,i2c->config.address_width == I2C_MEM_ADDR_SIZE_8BIT,(uint8_t *)data,size,0);
+ 
+     return ret;
+ }
+diff --git a/security/Config.in b/security/Config.in
+index fdaa3e649..5206a3e6b 100644
+--- a/security/Config.in
++++ b/security/Config.in
+@@ -6,13 +6,14 @@ source "security/ls_hal/Config.in"
+ source "security/alicrypto/Config.in"
+ source "security/dpm/Config.in"
+ source "security/id2/Config.in"
++source "3rdparty/experimental/optiga/projects/esp32_alios/Config.in"
+ source "security/irot/Config.in"
+ source "security/irot/km/Config.in"
+ source "security/irot/se/Config.in"
+ source "security/irot/tee/Config.in"
+ source "security/isst/Config.in"
+ source "security/itls/Config.in"
+-source "security/mbedtls/Config.in"
++## source "security/mbedtls/Config.in"
+ source "security/prov/Config.in"
+ ## --- End ---
+ 
+diff --git a/security/id2/aos.mk b/security/id2/aos.mk
+index eee0d8d27..c88359686 100644
+--- a/security/id2/aos.mk
++++ b/security/id2/aos.mk
+@@ -10,7 +10,7 @@ RPM_INCLUDE_DIR := ../include/id2
+ #id2 config
+ 
+ ifeq ($(CONFIG_LS_KM_SE), y)
+-$(NAME)_DEFINES     += ID2_CRYPTO_TYPE_CONFIG=ID2_CRYPTO_TYPE_3DES
++$(NAME)_DEFINES     += ID2_CRYPTO_TYPE_CONFIG=ID2_CRYPTO_TYPE_AES
+ else ifeq ($(CONFIG_LS_KM_TEE), y)
+ $(NAME)_DEFINES     += ID2_CRYPTO_TYPE_CONFIG=ID2_CRYPTO_TYPE_AES
+ else
+diff --git a/security/irot/Config.in b/security/irot/Config.in
+index 006fb2ccf..b6bfbf528 100644
+--- a/security/irot/Config.in
++++ b/security/irot/Config.in
+@@ -1,9 +1,9 @@
+ config AOS_COMP_IROT
+     bool "Root of Trust - MCU, SE and TEE"
+     default n
+-    select AOS_COMP_LIBKM_SE if CONFIG_LS_KM_SE
+-    select AOS_COMP_LIBKM_TEE if !CONFIG_LS_KM_SE && CONFIG_LS_KM_TEE
+-    select AOS_COMP_LIBKM if !CONFIG_LS_KM_SE && !CONFIG_LS_KM_TEE
++    #select AOS_COMP_LIBKM_SE if CONFIG_LS_KM_SE
++    #select AOS_COMP_LIBKM_TEE if !CONFIG_LS_KM_SE && CONFIG_LS_KM_TEE
++    #select AOS_COMP_LIBKM if !CONFIG_LS_KM_SE && !CONFIG_LS_KM_TEE
+     help
+ 
+ if AOS_COMP_IROT
+diff --git a/security/irot/se/aos.mk b/security/irot/se/aos.mk
+index afbdfae3e..a83548314 100644
+--- a/security/irot/se/aos.mk
++++ b/security/irot/se/aos.mk
+@@ -3,6 +3,7 @@ CHIPNAME = chip_template
+ $(NAME)_MBINS_TYPE := kernel
+ $(NAME)_VERSION := 1.0.0
+ $(NAME)_SUMMARY := key management for se
++$(NAME)_COMPONENTS := alicrypto
+ 
+ NAME := libkm_se
+ 
+@@ -12,11 +13,13 @@ $(NAME)_INCLUDES     += $(LIBSE)/../../include/irot
+ $(NAME)_INCLUDES     += $(LIBSE)/src
+ $(NAME)_INCLUDES     += $(LIBSE)/chipset/$(CHIPNAME)/include
+ $(NAME)_INCLUDES     += $(LIBSE)/chipset/$(CHIPNAME)
++$(NAME)_INCLUDES     += $(LIBSE)/../../../3rdparty/experimental/optiga/optiga/include
+ 
+ $(NAME)_SOURCES     += 			\
+     $(LIBSE)/src/core/km_to_irot.c \
+     $(LIBSE)/src/core/std_se_adapter.c \
+     $(LIBSE)/src/core/mtk_se_adapter.c \
++    $(LIBSE)/src/core/optiga_se_adapter.c \
+     $(LIBSE)/src/log/chiplog.c \
+     $(LIBSE)/chipset/$(CHIPNAME)/irot_impl/irot_hal.c \
+     $(LIBSE)/chipset/$(CHIPNAME)/se_driver_impl/se_driver.c \
+diff --git a/security/irot/se/chipset/chip_template/chip_config.h b/security/irot/se/chipset/chip_template/chip_config.h
+index b7b900ef3..989b10c43 100644
+--- a/security/irot/se/chipset/chip_template/chip_config.h
++++ b/security/irot/se/chipset/chip_template/chip_config.h
+@@ -19,6 +19,7 @@
+ #define CHIP_TYPE_SECURE_MCU                1
+ #define CHIP_TYPE_SE_STD_CMD                2
+ #define CHIP_TYPE_SE_MTK_CMD                3
++#define CHIP_TYPE_SE_OPTIGA_CMD             4
+ 
+ #define CHIP_CRYPTO_TYPE_3DES               1
+ #define CHIP_CRYPTO_TYPE_AES                2
+@@ -32,12 +33,12 @@
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+-#define CHIP_TYPE_CONFIG                    CHIP_TYPE_SE_STD_CMD
+-#define CHIP_CRYPTO_TYPE_CONFIG             CHIP_CRYPTO_TYPE_3DES
++#define CHIP_TYPE_CONFIG                    CHIP_TYPE_SE_OPTIGA_CMD
++#define CHIP_CRYPTO_TYPE_CONFIG             CHIP_CRYPTO_TYPE_AES
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+-#if ((CHIP_TYPE_CONFIG != CHIP_TYPE_SECURE_MCU) && (CHIP_TYPE_CONFIG != CHIP_TYPE_SE_STD_CMD) && (CHIP_TYPE_CONFIG != CHIP_TYPE_SE_MTK_CMD))
++#if ((CHIP_TYPE_CONFIG != CHIP_TYPE_SECURE_MCU) && (CHIP_TYPE_CONFIG != CHIP_TYPE_SE_STD_CMD) && (CHIP_TYPE_CONFIG != CHIP_TYPE_SE_MTK_CMD) && (CHIP_TYPE_CONFIG != CHIP_TYPE_SE_OPTIGA_CMD))
+ #error("CHIP_TYPE_CONFIG error.");
+ #endif
+ 
+diff --git a/security/irot/se/src/core/km_to_irot.c b/security/irot/se/src/core/km_to_irot.c
+index b8290c508..c58b3fae7 100644
+--- a/security/irot/se/src/core/km_to_irot.c
++++ b/security/irot/se/src/core/km_to_irot.c
+@@ -26,6 +26,9 @@ static void dump_chip_conf_info()
+         case CHIP_TYPE_SE_MTK_CMD: {
+             chip_log_debug("CHIP_TYPE_CONFIG           : %s\n", "CHIP_TYPE_SE_MTK_CMD");
+         }
++        case CHIP_TYPE_SE_OPTIGA_CMD: {
++            chip_log_debug("CHIP_TYPE_CONFIG           : %s\n", "CHIP_TYPE_SE_OPTIGA_CMD");
++        }
+         break;
+         default: {
+         } break;
+diff --git a/security/itls/src/mbedtls_alt.c b/security/itls/src/mbedtls_alt.c
+index d12d518e6..468211e0f 100644
+--- a/security/itls/src/mbedtls_alt.c
++++ b/security/itls/src/mbedtls_alt.c
+@@ -12,7 +12,20 @@
+ #include "itls/aes.h"
+ #include "itls/sha1.h"
+ #include "itls/sha256.h"
+-#include "itls/platform.h"
++//#include "itls/platform.h"
++
++extern void free(void *ptr);
++extern void *calloc(size_t nmemb, size_t size);
++
++void *mbedtls_calloc(size_t n, size_t s)
++{
++    return calloc(n, s);
++}
++
++void mbedtls_free(void *ptr)
++{
++    free(ptr);
++}
+ 
+ #if defined(MBEDTLS_AES_ALT)
+ #include "ali_crypto.h"
+@@ -294,7 +307,10 @@ void mbedtls_sha256_init_alt(mbedtls_sha256_context *ctx)
+ {
+     memset(ctx, 0, sizeof(mbedtls_sha256_context));
+ }
+-
++void mbedtls_sha256_init(mbedtls_sha256_context *ctx)
++{
++    mbedtls_sha256_init_alt(ctx);
++}
+ void mbedtls_sha256_free_alt(mbedtls_sha256_context *ctx)
+ {
+     if (ctx == NULL) {
+@@ -308,6 +324,10 @@ void mbedtls_sha256_free_alt(mbedtls_sha256_context *ctx)
+     mbedtls_zeroize(ctx, sizeof(mbedtls_sha256_context));
+ }
+ 
++void mbedtls_sha256_free(mbedtls_sha256_context *ctx)
++{
++    mbedtls_sha256_free_alt(ctx);
++}
+ void mbedtls_sha256_clone_alt(mbedtls_sha256_context *dst,
+                               const mbedtls_sha256_context *src)
+ {
+@@ -359,6 +379,10 @@ void mbedtls_sha256_starts_alt(mbedtls_sha256_context *ctx, int is224)
+     return;
+ }
+ 
++void mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224)
++{
++    return mbedtls_sha256_starts_alt(ctx, is224);
++}
+ void mbedtls_sha256_update_alt(mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen)
+ {
+     ali_crypto_result result;
+@@ -371,7 +395,10 @@ void mbedtls_sha256_update_alt(mbedtls_sha256_context *ctx, const unsigned char
+ 
+     return;
+ }
+-
++void mbedtls_sha256_update(mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen)
++{
++    return mbedtls_sha256_update_alt(ctx, input, ilen);
++}
+ void mbedtls_sha256_finish_alt(mbedtls_sha256_context *ctx, unsigned char output[32])
+ {
+     ali_crypto_result result;
+@@ -384,7 +411,10 @@ void mbedtls_sha256_finish_alt(mbedtls_sha256_context *ctx, unsigned char output
+ 
+     return;
+ }
+-
++void mbedtls_sha256_finish(mbedtls_sha256_context *ctx, unsigned char output[32])
++{
++    return mbedtls_sha256_finish_alt(ctx, output);
++}
+ void mbedtls_sha256_alt(const unsigned char *input, size_t ilen, unsigned char output[32], int is224)
+ {
+     mbedtls_sha256_context ctx;
+-- 
+2.21.0.windows.1
+
